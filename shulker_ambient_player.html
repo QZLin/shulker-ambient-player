@@ -87,7 +87,9 @@
     font-size: 12px; padding: 6px 10px; margin-bottom: 4px;
     background: #2e2440; border-left: 3px solid #6d5a8f;
     color: #8d7fa8; display: flex; justify-content: space-between;
+    cursor: pointer;
   }
+  .track:not(.now):hover { background: #3a2f4d; color: #b9a9d6; }
   .track.now { border-left-color: #ffd76e; color: #ffd76e; background: #3a2f4d; }
   footer { margin-top: 14px; text-align: center; font-size: 10px; color: #6b5f85; }
 </style>
@@ -283,6 +285,7 @@ SOUNDS.forEach(function(s, i){
   var d = document.createElement("div");
   d.className = "track"; d.id = "track" + i;
   d.innerHTML = "<span>" + (i + 1) + ". " + s.name + "</span><span>ogg</span>";
+  d.addEventListener("click", function(){ playFromList(i); });
   tracksBox.appendChild(d);
 });
 
@@ -317,10 +320,10 @@ function schedule(){
   timer = setTimeout(playNext, delay);
 }
 
-function playOne(manual){
+function playOne(manual, forcedIndex){
   // Global mutex: if audio is already playing (any trigger), ignore
   if (isPlaying) return false;
-  var idx = pick();
+  var idx = (typeof forcedIndex === "number") ? forcedIndex : pick();
   lastIndex = idx;
   updateNow(idx); // Highlight the current track
   audio.src = SOUNDS[idx].data;
@@ -340,6 +343,13 @@ function playOne(manual){
 function playNext(){
   if (!running) return;
   playOne(false);
+}
+
+function playFromList(idx){
+  // Same behavior as the manual "Play one" button, but for a specific track
+  if (isPlaying) return;      // Already playing; ignore
+  clearTimeout(timer);        // Cancel pending timer so it won't interrupt
+  playOne(true, idx);         // ended event restores state: if running, re-schedule
 }
 
 function barLoop(){
